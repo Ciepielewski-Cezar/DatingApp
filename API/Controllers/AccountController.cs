@@ -48,16 +48,16 @@ namespace API.Controllers
                  return Unauthorized("Invalid username");
             }
 
-            using var hmac = new HMACSHA512();
-            
-            
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            using var hmac = new HMACSHA512(user.PasswordSalt);
+            var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(loginDto.Password));
+
+            for (int i = 0; i < computedHash.Length; i++)
+            {
+                if(computedHash[i] != user.PasswordHash[i]) return Unauthorized("Invalid password");
+            }
 
             return user;
         }
-
-
 
         private async Task<bool> UserExist(string username) => await _context.Users.AnyAsync(x => x.UserName == username.ToLower());
     }
